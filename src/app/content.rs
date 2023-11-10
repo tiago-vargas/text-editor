@@ -19,12 +19,14 @@ impl SimpleComponent for ContentModel {
     type Output = ContentOutput;
 
     view! {
-        #[root]
-        gtk::Label {
-            set_label: "Hello, World!",
-            set_margin_all: 4,
-            set_css_classes: &["title-1"],
+        gtk::ScrolledWindow {
+            set_hexpand: true,
             set_vexpand: true,
+
+            gtk::TextView {
+                set_margin_all: 8,
+                set_monospace: true,
+            }
         }
     }
 
