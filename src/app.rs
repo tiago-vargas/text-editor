@@ -1,11 +1,11 @@
 use gtk::prelude::*;
 use relm4::prelude::*;
 use relm4_components::open_button::{OpenButton, OpenButtonSettings};
+use relm4_components::open_dialog::OpenDialogSettings;
 
 mod content;
 mod settings;
 
-use relm4_components::open_dialog::OpenDialogSettings;
 use settings::Settings;
 
 pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
@@ -77,7 +77,18 @@ impl SimpleComponent for AppModel {
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
         match message {
-            Self::Input::OpenFile(path) => println!("Open file {path:?}"),  // TODO: Implement actual action
+            Self::Input::OpenFile(path) => {
+                let contents = std::fs::read_to_string(path);
+                match contents {
+                    Ok(text) => {
+                        self.content
+                            .emit(content::ContentInput::SetContent(text));
+                    }
+                    Err(error) => {
+                        eprintln!("Error reading file: {}", error);
+                    }
+                }
+            }
         }
     }
 
