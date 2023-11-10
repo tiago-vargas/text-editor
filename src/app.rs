@@ -6,7 +6,7 @@ mod settings;
 
 use settings::Settings;
 
-pub(crate) const APP_ID: &str = "your.app_id";  // TODO: Set app ID
+pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
 
 pub(crate) struct AppModel {
     content: Controller<content::ContentModel>,
@@ -27,7 +27,7 @@ impl SimpleComponent for AppModel {
 
     view! {
         adw::ApplicationWindow {
-            set_title: Some("Template"),  // TODO: Set window title
+            set_title: Some("Text Editor"),
             set_default_width: settings.int(Settings::WindowWidth.as_str()),
             set_default_height: settings.int(Settings::WindowHeight.as_str()),
             set_maximized: settings.boolean(Settings::WindowMaximized.as_str()),
