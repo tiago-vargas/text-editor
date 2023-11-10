@@ -31,7 +31,6 @@ impl SimpleComponent for AppModel {
             set_default_width: settings.int(Settings::WindowWidth.as_str()),
             set_default_height: settings.int(Settings::WindowHeight.as_str()),
             set_maximized: settings.boolean(Settings::WindowMaximized.as_str()),
-            add_css_class: "devel",
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
