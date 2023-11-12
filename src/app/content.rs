@@ -2,7 +2,7 @@ use gtk::prelude::*;
 use relm4::prelude::*;
 
 pub(crate) struct ContentModel {
-    text_buffer: gtk::TextBuffer,
+    pub(crate) text_buffer: gtk::TextBuffer,
 }
 
 pub(crate) struct ContentInit;

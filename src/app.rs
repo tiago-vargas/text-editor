@@ -1,7 +1,11 @@
 use gtk::prelude::*;
+use relm4::actions::{AccelsPlus, RelmAction, RelmActionGroup};
 use relm4::prelude::*;
 use relm4_components::open_button::{OpenButton, OpenButtonSettings};
 use relm4_components::open_dialog::OpenDialogSettings;
+use relm4_components::save_dialog::{
+    SaveDialog, SaveDialogMsg, SaveDialogResponse, SaveDialogSettings,
+};
 
 mod content;
 mod settings;
@@ -13,11 +17,15 @@ pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
 pub(crate) struct AppModel {
     content: Controller<content::ContentModel>,
     open_button: Controller<OpenButton>,
+    save_dialog: Controller<SaveDialog>,
 }
 
 #[derive(Debug)]
 pub(crate) enum AppInput {
     OpenFile(std::path::PathBuf),
+    SaveFile(std::path::PathBuf),
+    ShowSaveDialog,
+    DoNothing,
 }
 
 #[derive(Debug)]
@@ -68,9 +76,20 @@ impl SimpleComponent for AppModel {
                 max_recent_files: 10,
             })
             .forward(sender.input_sender(), Self::Input::OpenFile);
-        let model = AppModel { content, open_button };
+        let save_dialog = SaveDialog::builder()
+            .transient_for_native(window)
+            .launch(SaveDialogSettings::default())
+            .forward(sender.input_sender(), |response| {
+                match response {
+                    SaveDialogResponse::Accept(path) => Self::Input::SaveFile(path),
+                    SaveDialogResponse::Cancel => Self::Input::DoNothing,
+                }
+            });
+        let model = AppModel { content, open_button, save_dialog };
 
         let widgets = view_output!();
+
+        Self::create_actions(&widgets, &sender);
 
         ComponentParts { model, widgets }
     }
@@ -89,6 +108,20 @@ impl SimpleComponent for AppModel {
                     }
                 }
             }
+            Self::Input::SaveFile(path) => {
+                let start = self.content.model().text_buffer.start_iter();
+                let end = self.content.model().text_buffer.end_iter();
+                let text = self.content.model().text_buffer.text(&start, &end, false);
+                match std::fs::write(path, text) {
+                    Ok(_) => (),
+                    Err(error) => eprintln!("Error saving file: {}", error),
+                }
+            }
+            Self::Input::ShowSaveDialog => {
+                self.save_dialog
+                    .emit(SaveDialogMsg::Save);
+            }
+            Self::Input::DoNothing => (),
         }
     }
 
@@ -109,5 +142,27 @@ impl AppModel {
             settings::Settings::WindowMaximized.as_str(),
             widgets.main_window.is_maximized(),
         );
+    }
+
+    fn create_actions(
+        widgets: &<Self as SimpleComponent>::Widgets,
+        sender: &ComponentSender<Self>
+    ) {
+        let app = relm4::main_adw_application();
+
+        relm4::new_action_group!(AppActions, "app");
+        let mut group = RelmActionGroup::<AppActions>::new();
+
+        relm4::new_stateless_action!(SaveAs, AppActions, "save-as");
+        let save_as = {
+            let sender = sender.clone();
+            RelmAction::<SaveAs>::new_stateless(move |_| {
+                sender.input(<Self as SimpleComponent>::Input::ShowSaveDialog);
+            })
+        };
+        app.set_accelerators_for_action::<SaveAs>(&["<primary><Shift>S"]);
+        group.add_action(save_as);
+
+        group.register_for_widget(&widgets.main_window);
     }
 }
