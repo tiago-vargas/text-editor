@@ -1,5 +1,7 @@
 use gtk::prelude::*;
 use relm4::prelude::*;
+use relm4_components::open_button::{OpenButton, OpenButtonSettings};
+use relm4_components::open_dialog::OpenDialogSettings;
 
 mod content;
 mod settings;
@@ -10,10 +12,13 @@ pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
 
 pub(crate) struct AppModel {
     content: Controller<content::ContentModel>,
+    open_button: Controller<OpenButton>,
 }
 
 #[derive(Debug)]
-pub(crate) enum AppInput {}
+pub(crate) enum AppInput {
+    OpenFile(std::path::PathBuf),
+}
 
 #[derive(Debug)]
 pub(crate) enum AppOutput {}
@@ -35,7 +40,9 @@ impl SimpleComponent for AppModel {
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
 
-                adw::HeaderBar,
+                adw::HeaderBar {
+                    pack_start: model.open_button.widget(),
+                },
 
                 model.content.widget(),
             },
@@ -46,14 +53,22 @@ impl SimpleComponent for AppModel {
     fn init(
         _init: Self::Init,
         window: &Self::Root,
-        _sender: ComponentSender<Self>,
+        sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let settings = gtk::gio::Settings::new(APP_ID);
 
         let content = content::ContentModel::builder()
             .launch(content::ContentInit)
             .detach();
-        let model = AppModel { content };
+        let open_button = OpenButton::builder()
+            .launch(OpenButtonSettings {
+                dialog_settings: OpenDialogSettings::default(),
+                text: "Open",
+                recently_opened_files: None,
+                max_recent_files: 10,
+            })
+            .forward(sender.input_sender(), Self::Input::OpenFile);
+        let model = AppModel { content, open_button };
 
         let widgets = view_output!();
 
@@ -61,7 +76,20 @@ impl SimpleComponent for AppModel {
     }
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
-        match message {}
+        match message {
+            Self::Input::OpenFile(path) => {
+                let contents = std::fs::read_to_string(path);
+                match contents {
+                    Ok(text) => {
+                        self.content
+                            .emit(content::ContentInput::SetContent(text));
+                    }
+                    Err(error) => {
+                        eprintln!("Error reading file: {}", error);
+                    }
+                }
+            }
+        }
     }
 
     fn shutdown(&mut self, widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {

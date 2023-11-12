@@ -1,12 +1,16 @@
 use gtk::prelude::*;
 use relm4::prelude::*;
 
-pub(crate) struct ContentModel;
+pub(crate) struct ContentModel {
+    text_buffer: gtk::TextBuffer,
+}
 
 pub(crate) struct ContentInit;
 
 #[derive(Debug)]
-pub(crate) enum ContentInput {}
+pub(crate) enum ContentInput {
+    SetContent(String),
+}
 
 #[derive(Debug)]
 pub(crate) enum ContentOutput {}
@@ -19,12 +23,15 @@ impl SimpleComponent for ContentModel {
     type Output = ContentOutput;
 
     view! {
-        #[root]
-        gtk::Label {
-            set_label: "Hello, World!",
-            set_margin_all: 4,
-            set_css_classes: &["title-1"],
+        gtk::ScrolledWindow {
+            set_hexpand: true,
             set_vexpand: true,
+
+            gtk::TextView {
+                set_margin_all: 8,
+                set_monospace: true,
+                set_buffer: Some(&model.text_buffer),
+            }
         }
     }
 
@@ -33,7 +40,8 @@ impl SimpleComponent for ContentModel {
         root: &Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let model = Self;
+        let text_buffer = gtk::TextBuffer::default();
+        let model = Self { text_buffer };
 
         let widgets = view_output!();
 
@@ -41,6 +49,10 @@ impl SimpleComponent for ContentModel {
     }
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
-        match message {}
+        match message {
+            Self::Input::SetContent(text) => {
+                self.text_buffer.set_text(&text);
+            }
+        }
     }
 }
