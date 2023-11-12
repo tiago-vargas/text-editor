@@ -20,12 +20,14 @@ pub(crate) struct AppModel {
     content: Controller<content::ContentModel>,
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
+    opened_path: Option<PathBuf>,
 }
 
 #[derive(Debug)]
 pub(crate) enum AppInput {
     OpenFile(PathBuf),
     SaveFile(PathBuf),
+    SaveCurrentFile,
     ShowSaveDialog,
     DoNothing,
 }
@@ -87,7 +89,12 @@ impl SimpleComponent for AppModel {
                     SaveDialogResponse::Cancel => Self::Input::DoNothing,
                 }
             });
-        let model = AppModel { content, open_button, save_dialog };
+        let model = AppModel {
+            content,
+            open_button,
+            save_dialog,
+            opened_path: None::<PathBuf>,
+        };
 
         let widgets = view_output!();
 
@@ -96,16 +103,23 @@ impl SimpleComponent for AppModel {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             Self::Input::OpenFile(path) => {
-                let contents = std::fs::read_to_string(path);
+                let contents = std::fs::read_to_string(path.clone());
                 match contents {
                     Ok(text) => {
                         self.content
                             .emit(content::ContentInput::SetContent(text));
+                        self.opened_path = Some(path);
                     }
                     Err(error) =>  eprintln!("Error reading file: {}", error),
+                }
+            }
+            Self::Input::SaveCurrentFile => {
+                match &self.opened_path {
+                    Some(path) => sender.input(Self::Input::SaveFile(path.clone())),
+                    None => (),
                 }
             }
             Self::Input::SaveFile(path) => {
@@ -151,7 +165,7 @@ impl AppModel {
         let app = relm4::main_adw_application();
 
         relm4::new_action_group!(AppActions, "app");
-        let mut group = RelmActionGroup::<AppActions>::new();
+        let mut app_actions = RelmActionGroup::<AppActions>::new();
 
         relm4::new_stateless_action!(SaveAs, AppActions, "save-as");
         let save_as = {
@@ -161,8 +175,18 @@ impl AppModel {
             })
         };
         app.set_accelerators_for_action::<SaveAs>(&["<primary><Shift>S"]);
-        group.add_action(save_as);
+        app_actions.add_action(save_as);
 
-        group.register_for_widget(&widgets.main_window);
+        relm4::new_stateless_action!(Save, AppActions, "save");
+        let save = {
+            let sender = sender.clone();
+            RelmAction::<Save>::new_stateless(move |_| {
+                sender.input(<Self as SimpleComponent>::Input::SaveCurrentFile);
+            })
+        };
+        app.set_accelerators_for_action::<Save>(&["<primary>S"]);
+        app_actions.add_action(save);
+
+        app_actions.register_for_widget(&widgets.main_window);
     }
 }
