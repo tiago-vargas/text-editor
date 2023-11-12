@@ -119,7 +119,7 @@ impl SimpleComponent for AppModel {
             Self::Input::SaveCurrentFile => {
                 match &self.opened_path {
                     Some(path) => sender.input(Self::Input::SaveFile(path.clone())),
-                    None => (),
+                    None => sender.input(Self::Input::ShowSaveDialog),
                 }
             }
             Self::Input::SaveFile(path) => {
