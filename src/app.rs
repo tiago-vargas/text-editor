@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use std::path::PathBuf;
 
 use gtk::prelude::*;
@@ -21,6 +22,7 @@ pub(crate) struct AppModel {
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
     opened_path: Option<PathBuf>,
+    toast: Cell<Option<adw::Toast>>,
 }
 
 #[derive(Debug)]
@@ -29,6 +31,7 @@ pub(crate) enum AppInput {
     SaveFile(PathBuf),
     SaveCurrentFile,
     ShowSaveDialog,
+    ShowSavedToast,
     DoNothing,
 }
 
@@ -56,7 +59,11 @@ impl SimpleComponent for AppModel {
                     pack_start: model.open_button.widget(),
                 },
 
-                model.content.widget(),
+                adw::ToastOverlay {
+                    model.content.widget(),
+
+                    #[watch] add_toast?: model.toast.take(),
+                },
             },
         }
     }
@@ -94,6 +101,7 @@ impl SimpleComponent for AppModel {
             open_button,
             save_dialog,
             opened_path: None::<PathBuf>,
+            toast: Cell::new(None),
         };
 
         let widgets = view_output!();
@@ -127,13 +135,20 @@ impl SimpleComponent for AppModel {
                 let end = self.content.model().text_buffer.end_iter();
                 let text = self.content.model().text_buffer.text(&start, &end, false);
                 match std::fs::write(path, text) {
-                    Ok(_) => (),
+                    Ok(_) => sender.input(Self::Input::ShowSavedToast),
                     Err(error) => eprintln!("Error saving file: {}", error),
                 }
             }
             Self::Input::ShowSaveDialog => {
                 self.save_dialog
                     .emit(SaveDialogMsg::Save);
+            }
+            Self::Input::ShowSavedToast => {
+                let toast = adw::Toast::builder()
+                    .title("File saved")
+                    .timeout(2)
+                    .build();
+                self.toast.set(Some(toast));
             }
             Self::Input::DoNothing => (),
         }
