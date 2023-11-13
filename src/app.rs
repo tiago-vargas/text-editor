@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use gtk::prelude::*;
 use relm4::actions::{AccelsPlus, RelmAction, RelmActionGroup};
 use relm4::prelude::*;
@@ -22,8 +24,8 @@ pub(crate) struct AppModel {
 
 #[derive(Debug)]
 pub(crate) enum AppInput {
-    OpenFile(std::path::PathBuf),
-    SaveFile(std::path::PathBuf),
+    OpenFile(PathBuf),
+    SaveFile(PathBuf),
     ShowSaveDialog,
     DoNothing,
 }
@@ -103,9 +105,7 @@ impl SimpleComponent for AppModel {
                         self.content
                             .emit(content::ContentInput::SetContent(text));
                     }
-                    Err(error) => {
-                        eprintln!("Error reading file: {}", error);
-                    }
+                    Err(error) =>  eprintln!("Error reading file: {}", error),
                 }
             }
             Self::Input::SaveFile(path) => {
