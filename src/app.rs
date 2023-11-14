@@ -59,16 +59,36 @@ impl SimpleComponent for AppModel {
                     pack_start: model.open_button.widget(),
                 },
 
-                adw::ToastOverlay {
-                    model.content.widget(),
+                adw::TabBar {
+                    set_view: Some(&tab_view),
+                },
 
-                    #[watch] add_toast?: model.toast.take(),
+                #[name = "tab_view"]
+                adw::TabView {
+                    append = &adw::ToastOverlay {
+                        model.content.widget(),
+
+                        #[watch] add_toast?: model.toast.take(),
+                    } -> {
+                        set_title: "Page 1",
+                    },
+
+                    append = &adw::ToastOverlay {
+                        // model.content.widget(),
+                        gtk::Label {
+                            set_text: "Page 2",
+                        },
+
+                        #[watch] add_toast?: model.toast.take(),
+                    } -> {
+                        set_title: "Page 1",
+                    },
+
                 },
             },
         }
     }
 
-    /// Initialize the UI and model.
     fn init(
         _init: Self::Init,
         window: &Self::Root,
