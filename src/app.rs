@@ -137,9 +137,7 @@ impl SimpleComponent for AppModel {
                 }
             }
             Self::Input::SaveFile(path) => {
-                let start = self.editor.model().text_buffer.start_iter();
-                let end = self.editor.model().text_buffer.end_iter();
-                let text = self.editor.model().text_buffer.text(&start, &end, false);
+                let text = self.editor.model().text();
                 match std::fs::write(path, text) {
                     Ok(_) => sender.input(Self::Input::ShowSavedToast),
                     Err(error) => eprintln!("Error saving file: {}", error),
