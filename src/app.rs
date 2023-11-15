@@ -3,6 +3,7 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 
 use gtk::prelude::*;
+use relm4::factory::FactoryVecDeque;
 use relm4::prelude::*;
 use relm4_components::open_button::{OpenButton, OpenButtonSettings};
 use relm4_components::open_dialog::OpenDialogSettings;
@@ -24,6 +25,7 @@ pub(crate) struct AppModel {
     opened_path_string: Option<String>,
     opened_file_name: Option<String>,
     toast: Cell<Option<adw::Toast>>,
+    editors: FactoryVecDeque<editor::editor2::Model>,
 }
 
 #[derive(Debug)]
@@ -98,6 +100,7 @@ impl SimpleComponent for AppModel {
                     SaveDialogResponse::Cancel => Self::Input::DoNothing,
                 }
             });
+            let editors = FactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
         let model = AppModel {
             editor,
             open_button,
@@ -106,6 +109,7 @@ impl SimpleComponent for AppModel {
             opened_path_string: None,
             opened_file_name: None,
             toast: Cell::new(None),
+            editors
         };
 
         let widgets = view_output!();

@@ -65,3 +65,65 @@ impl Model {
         self.text_buffer.text(&start, &end, false)
     }
 }
+
+pub(crate) mod editor2 {
+    use gtk::prelude::*;
+    use relm4::prelude::*;
+
+    pub(crate) struct Model {
+        pub(crate) text_buffer: gtk::TextBuffer,
+    }
+
+    pub(crate) struct Init;
+
+    #[derive(Debug)]
+    pub(crate) enum Input {}
+
+    #[derive(Debug)]
+    pub(crate) enum Output {}
+
+    #[relm4::factory(pub(crate))]
+    impl FactoryComponent for Model {
+        type Init = Init;
+        type Input = Input;
+        type Output = Output;
+
+        type CommandOutput = ();
+        type ParentInput = crate::app::AppInput;
+        type ParentWidget = gtk::Box;
+
+        view! {
+            gtk::ScrolledWindow {
+                set_hexpand: true,
+                set_vexpand: true,
+
+                gtk::TextView {
+                    set_margin_all: 8,
+                    set_monospace: true,
+                    set_buffer: Some(&self.text_buffer),
+                }
+            }
+        }
+
+        fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
+            Some(match output {
+                // Self::Output::SendFront(index) => AppMsg::SendFront(index),
+            })
+        }
+
+        fn init_model(
+            _value: Self::Init,
+            _index: &DynamicIndex,
+            _sender: FactorySender<Self>
+        ) -> Self {
+            let text_buffer = gtk::TextBuffer::default();
+            Self { text_buffer }
+        }
+
+        fn update(&mut self, msg: Self::Input, _sender: FactorySender<Self>) {
+            match msg {
+                // Self::Input::??? {}
+            }
+        }
+    }
+}
