@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use gtk::prelude::*;
 use relm4::actions::{AccelsPlus, RelmAction, RelmActionGroup};
+use relm4::factory::FactoryVecDeque;
 use relm4::prelude::*;
 use relm4_components::open_button::{OpenButton, OpenButtonSettings};
 use relm4_components::open_dialog::OpenDialogSettings;
@@ -23,6 +24,7 @@ pub(crate) struct AppModel {
     save_dialog: Controller<SaveDialog>,
     opened_path: Option<PathBuf>,
     toast: Cell<Option<adw::Toast>>,
+    editors: FactoryVecDeque<editor::editor2::Model>,
 }
 
 #[derive(Debug)]
@@ -96,12 +98,14 @@ impl SimpleComponent for AppModel {
                     SaveDialogResponse::Cancel => Self::Input::DoNothing,
                 }
             });
+            let editors = FactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
         let model = AppModel {
             editor,
             open_button,
             save_dialog,
             opened_path: None::<PathBuf>,
             toast: Cell::new(None),
+            editors
         };
 
         let widgets = view_output!();
