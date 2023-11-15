@@ -17,7 +17,7 @@ mod settings;
 pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
 
 pub(crate) struct AppModel {
-    editor: Controller<content::ContentModel>,
+    editor: Controller<content::EditorModel>,
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
     opened_path: Option<PathBuf>,
@@ -78,8 +78,8 @@ impl SimpleComponent for AppModel {
         window: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let editor = content::ContentModel::builder()
-            .launch(content::ContentInit)
+        let editor = content::EditorModel::builder()
+            .launch(content::EditorInit)
             .detach();
         let open_button = OpenButton::builder()
             .launch(OpenButtonSettings {
@@ -123,7 +123,7 @@ impl SimpleComponent for AppModel {
                 match contents {
                     Ok(text) => {
                         self.editor
-                            .emit(content::ContentInput::SetContent(text));
+                            .emit(content::EditorInput::SetContent(text));
                         self.opened_path = Some(path);
                         sender.input(Self::Input::UpdateNameAndPath);
                     }
