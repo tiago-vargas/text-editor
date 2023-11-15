@@ -90,9 +90,10 @@ pub(crate) mod editor2 {
 
         type CommandOutput = ();
         type ParentInput = crate::app::AppInput;
-        type ParentWidget = gtk::Box;
+        type ParentWidget = adw::TabView;
 
         view! {
+            #[root]
             gtk::ScrolledWindow {
                 set_hexpand: true,
                 set_vexpand: true,
@@ -102,7 +103,12 @@ pub(crate) mod editor2 {
                     set_monospace: true,
                     set_buffer: Some(&self.text_buffer),
                 }
-            }
+            },
+
+            #[local_ref]
+            returned_widget -> adw::TabPage {
+                set_title: "Untitled",
+            },
         }
 
         fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
