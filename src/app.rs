@@ -29,6 +29,7 @@ pub(crate) struct AppModel {
 
 #[derive(Debug)]
 pub(crate) enum AppInput {
+    NewEditor,
     OpenFile(PathBuf),
     SaveFile(PathBuf),
     SaveCurrentFile,
@@ -59,10 +60,23 @@ impl SimpleComponent for AppModel {
 
                 adw::HeaderBar {
                     pack_start: model.open_button.widget(),
+                    pack_start = &gtk::Button {
+                        set_icon_name: "tab-new-symbolic",
+
+                        connect_clicked[sender] => move |_| {
+                            sender.input(Self::Input::NewEditor);
+                        },
+                    },
+                },
+
+                adw::TabBar {
+                    set_view: Some(tab_view),
                 },
 
                 adw::ToastOverlay {
-                    model.editor.widget(),
+                    #[local_ref]
+                    tab_view -> adw::TabView,
+                    // model.editor.widget(),
 
                     #[watch] add_toast?: model.toast.take(),
                 },
@@ -98,7 +112,7 @@ impl SimpleComponent for AppModel {
                     SaveDialogResponse::Cancel => Self::Input::DoNothing,
                 }
             });
-            let editors = FactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
+        let editors = FactoryVecDeque::new(adw::TabView::default(), sender.input_sender());
         let model = AppModel {
             editor,
             open_button,
@@ -108,15 +122,24 @@ impl SimpleComponent for AppModel {
             editors
         };
 
+        let tab_view = model.editors.widget();
+
         let widgets = view_output!();
 
         Self::create_actions(&widgets, &sender);
+
+        sender.input(Self::Input::NewEditor);
 
         ComponentParts { model, widgets }
     }
 
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
+            Self::Input::NewEditor => {
+                let mut editors_guard = self.editors.guard();
+
+                editors_guard.push_back(editor::editor2::Init);
+            },
             Self::Input::OpenFile(path) => {
                 let contents = std::fs::read_to_string(path.clone());
                 match contents {
