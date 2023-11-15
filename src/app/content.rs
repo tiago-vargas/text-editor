@@ -1,26 +1,26 @@
 use gtk::prelude::*;
 use relm4::prelude::*;
 
-pub(crate) struct ContentModel {
+pub(crate) struct EditorModel {
     pub(crate) text_buffer: gtk::TextBuffer,
 }
 
-pub(crate) struct ContentInit;
+pub(crate) struct EditorInit;
 
 #[derive(Debug)]
-pub(crate) enum ContentInput {
+pub(crate) enum EditorInput {
     SetContent(String),
 }
 
 #[derive(Debug)]
-pub(crate) enum ContentOutput {}
+pub(crate) enum EditorOutput {}
 
 #[relm4::component(pub(crate))]
-impl SimpleComponent for ContentModel {
-    type Init = ContentInit;
+impl SimpleComponent for EditorModel {
+    type Init = EditorInit;
 
-    type Input = ContentInput;
-    type Output = ContentOutput;
+    type Input = EditorInput;
+    type Output = EditorOutput;
 
     view! {
         gtk::ScrolledWindow {
