@@ -11,13 +11,13 @@ use relm4_components::save_dialog::{
 };
 
 mod actions;
-mod content;
+mod editor;
 mod settings;
 
 pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
 
 pub(crate) struct AppModel {
-    editor: Controller<content::EditorModel>,
+    editor: Controller<editor::EditorModel>,
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
     opened_path: Option<PathBuf>,
@@ -78,8 +78,8 @@ impl SimpleComponent for AppModel {
         window: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let editor = content::EditorModel::builder()
-            .launch(content::EditorInit)
+        let editor = editor::EditorModel::builder()
+            .launch(editor::EditorInit)
             .detach();
         let open_button = OpenButton::builder()
             .launch(OpenButtonSettings {
@@ -123,7 +123,7 @@ impl SimpleComponent for AppModel {
                 match contents {
                     Ok(text) => {
                         self.editor
-                            .emit(content::EditorInput::SetContent(text));
+                            .emit(editor::EditorInput::SetContent(text));
                         self.opened_path = Some(path);
                         sender.input(Self::Input::UpdateNameAndPath);
                     }
