@@ -18,7 +18,7 @@ use settings::Settings;
 pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
 
 pub(crate) struct AppModel {
-    content: Controller<content::ContentModel>,
+    editor: Controller<content::ContentModel>,
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
     opened_path: Option<PathBuf>,
@@ -60,7 +60,7 @@ impl SimpleComponent for AppModel {
                 },
 
                 adw::ToastOverlay {
-                    model.content.widget(),
+                    model.editor.widget(),
 
                     #[watch] add_toast?: model.toast.take(),
                 },
@@ -76,7 +76,7 @@ impl SimpleComponent for AppModel {
     ) -> ComponentParts<Self> {
         let settings = gtk::gio::Settings::new(APP_ID);
 
-        let content = content::ContentModel::builder()
+        let editor = content::ContentModel::builder()
             .launch(content::ContentInit)
             .detach();
         let open_button = OpenButton::builder()
@@ -97,7 +97,7 @@ impl SimpleComponent for AppModel {
                 }
             });
         let model = AppModel {
-            content,
+            editor,
             open_button,
             save_dialog,
             opened_path: None::<PathBuf>,
@@ -117,7 +117,7 @@ impl SimpleComponent for AppModel {
                 let contents = std::fs::read_to_string(path.clone());
                 match contents {
                     Ok(text) => {
-                        self.content
+                        self.editor
                             .emit(content::ContentInput::SetContent(text));
                         self.opened_path = Some(path);
                     }
@@ -131,9 +131,9 @@ impl SimpleComponent for AppModel {
                 }
             }
             Self::Input::SaveFile(path) => {
-                let start = self.content.model().text_buffer.start_iter();
-                let end = self.content.model().text_buffer.end_iter();
-                let text = self.content.model().text_buffer.text(&start, &end, false);
+                let start = self.editor.model().text_buffer.start_iter();
+                let end = self.editor.model().text_buffer.end_iter();
+                let text = self.editor.model().text_buffer.text(&start, &end, false);
                 match std::fs::write(path, text) {
                     Ok(_) => sender.input(Self::Input::ShowSavedToast),
                     Err(error) => eprintln!("Error saving file: {}", error),
