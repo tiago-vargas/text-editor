@@ -18,7 +18,9 @@ mod settings;
 pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
 
 pub(crate) struct AppModel {
-    editor: Controller<editor::Model>,
+    // editor: Controller<editor::Model>,
+    // editor: editor::editor2::Model,
+    selected_tab: usize,
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
     opened_path: Option<PathBuf>,
@@ -26,6 +28,7 @@ pub(crate) struct AppModel {
     opened_file_name: Option<String>,
     toast: Cell<Option<adw::Toast>>,
     editors: FactoryVecDeque<editor::editor2::Model>,
+    active_editor: usize,
 }
 
 #[derive(Debug)]
@@ -38,6 +41,7 @@ pub(crate) enum AppInput {
     ShowSavedToast,
     UpdateNameAndPath,
     DoNothing,
+    UpdateSelectedTab(DynamicIndex),
 }
 
 #[derive(Debug)]
@@ -94,9 +98,9 @@ impl SimpleComponent for AppModel {
         window: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let editor = editor::Model::builder()
-            .launch(editor::Init)
-            .detach();
+        // let editor = editor::Model::builder()
+        //     .launch(editor::Init)
+        //     .detach();
         let open_button = OpenButton::builder()
             .launch(OpenButtonSettings {
                 dialog_settings: OpenDialogSettings::default(),
@@ -116,14 +120,16 @@ impl SimpleComponent for AppModel {
             });
         let editors = FactoryVecDeque::new(adw::TabView::default(), sender.input_sender());
         let model = AppModel {
-            editor,
+            // editor,
+            selected_tab: 0,
             open_button,
             save_dialog,
             opened_path: None,
             opened_path_string: None,
             opened_file_name: None,
             toast: Cell::new(None),
-            editors
+            editors,
+            active_editor: 0,
         };
 
         let tab_view = model.editors.widget();
@@ -149,8 +155,12 @@ impl SimpleComponent for AppModel {
                 let contents = std::fs::read_to_string(path.clone());
                 match contents {
                     Ok(text) => {
-                        self.editor
-                            .emit(editor::Input::SetContent(text));
+                        // let editor = self.
+                        let editor = self.editors.get(self.selected_tab)
+                            .expect("Index of tab out of bounds");
+                        // editor.text_buffer.
+                        // self.editor
+                        //     .emit(editor::Input::SetContent(text));
                         self.opened_path = Some(path);
                         sender.input(Self::Input::UpdateNameAndPath);
                     }
@@ -164,11 +174,11 @@ impl SimpleComponent for AppModel {
                 }
             }
             Self::Input::SaveFile(path) => {
-                let text = self.editor.model().text();
-                match std::fs::write(path, text) {
-                    Ok(_) => sender.input(Self::Input::ShowSavedToast),
-                    Err(error) => eprintln!("Error saving file: {}", error),
-                }
+                // let text = self.editor.model().text();
+                // match std::fs::write(path, text) {
+                //     Ok(_) => sender.input(Self::Input::ShowSavedToast),
+                //     Err(error) => eprintln!("Error saving file: {}", error),
+                // }
             }
             Self::Input::ShowSaveDialog => {
                 self.save_dialog
@@ -192,6 +202,7 @@ impl SimpleComponent for AppModel {
                     .and_then(|p| p.to_str().map(|s| String::from(s)));
             }
             Self::Input::DoNothing => (),
+            Self::Input::UpdateSelectedTab(index) => self.selected_tab = index.current_index(),
         }
     }
 

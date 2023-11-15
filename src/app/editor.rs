@@ -77,10 +77,14 @@ pub(crate) mod editor2 {
     pub(crate) struct Init;
 
     #[derive(Debug)]
-    pub(crate) enum Input {}
+    pub(crate) enum Input {
+        Set(String),
+    }
 
     #[derive(Debug)]
-    pub(crate) enum Output {}
+    pub(crate) enum Output {
+        Selected(DynamicIndex),
+    }
 
     #[relm4::factory(pub(crate))]
     impl FactoryComponent for Model {
@@ -108,12 +112,17 @@ pub(crate) mod editor2 {
             #[local_ref]
             returned_widget -> adw::TabPage {
                 set_title: "Untitled",
+
+                connect_selected_notify[sender, index] => move |_| {
+                    sender.output(Self::Output::Selected(index.clone()));
+                },
             },
         }
 
         fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
             Some(match output {
                 // Self::Output::SendFront(index) => AppMsg::SendFront(index),
+                Self::Output::Selected(index) => crate::app::AppInput::UpdateSelectedTab(index),
             })
         }
 
@@ -128,7 +137,7 @@ pub(crate) mod editor2 {
 
         fn update(&mut self, msg: Self::Input, _sender: FactorySender<Self>) {
             match msg {
-                // Self::Input::??? {}
+                Self::Input::Set(content) =>  {}
             }
         }
     }
