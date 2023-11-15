@@ -56,3 +56,12 @@ impl SimpleComponent for Model {
         }
     }
 }
+
+impl Model {
+    pub(crate) fn text(&self) -> gtk::glib::GString {
+        let start = self.text_buffer.start_iter();
+        let end = self.text_buffer.end_iter();
+
+        self.text_buffer.text(&start, &end, false)
+    }
+}
