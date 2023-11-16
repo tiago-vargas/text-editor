@@ -1,4 +1,5 @@
 use std::cell::Cell;
+use std::fs;
 use std::path::PathBuf;
 
 use gtk::prelude::*;
@@ -76,15 +77,34 @@ impl SimpleComponent for AppModel {
     ) -> ComponentParts<Self> {
         let settings = gtk::gio::Settings::new(APP_ID);
 
+        let mut path = gtk::glib::user_data_dir();
+        path.push(APP_ID);
+        fs::create_dir_all(&path)
+            .expect("Could not create app data directory.");
+
+        let recent_files_file_name = "recent_files";
+        path.push(recent_files_file_name);
+        let p = path.clone();
+        let recent_files_file_path = String::from(p.to_str().unwrap());
+        let file: fs::File = fs::File::create(path)
+            .expect(format!("Could not create file `{recent_files_file_name}`.").as_str());
+        // let file_path = PathBuf::from("/path/to/file.txt");
+        // let file_path_str = file_path.to_str().unwrap();
+        // println!("File path as string: {}", file_path_str);
+        // file.str;
+
         let content = content::ContentModel::builder()
             .launch(content::ContentInit)
             .detach();
         let open_button = OpenButton::builder()
-            .launch(OpenButtonSettings {
-                dialog_settings: OpenDialogSettings::default(),
-                text: "Open",
-                recently_opened_files: None,
-                max_recent_files: 10,
+            .launch({
+                let p = recent_files_file_path.as_str();
+                OpenButtonSettings {
+                    dialog_settings: OpenDialogSettings::default(),
+                    text: "Open",
+                    recently_opened_files: Some(".recent_files"),
+                    max_recent_files: 10,
+                }
             })
             .forward(sender.input_sender(), Self::Input::OpenFile);
         let save_dialog = SaveDialog::builder()
@@ -114,7 +134,7 @@ impl SimpleComponent for AppModel {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             Self::Input::OpenFile(path) => {
-                let contents = std::fs::read_to_string(path.clone());
+                let contents = fs::read_to_string(path.clone());
                 match contents {
                     Ok(text) => {
                         self.content
@@ -134,7 +154,7 @@ impl SimpleComponent for AppModel {
                 let start = self.content.model().text_buffer.start_iter();
                 let end = self.content.model().text_buffer.end_iter();
                 let text = self.content.model().text_buffer.text(&start, &end, false);
-                match std::fs::write(path, text) {
+                match fs::write(path, text) {
                     Ok(_) => sender.input(Self::Input::ShowSavedToast),
                     Err(error) => eprintln!("Error saving file: {}", error),
                 }
