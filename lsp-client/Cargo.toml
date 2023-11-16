@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 jsonrpc = "0.16.0"
+lsp-types = "0.94.1"
