@@ -35,6 +35,10 @@ pub(crate) enum AppInput {
     DoNothing,
 }
 
+relm4::new_action_group!(AppActions, "app");
+relm4::new_stateless_action!(Save, AppActions, "save");
+relm4::new_stateless_action!(SaveAs, AppActions, "save-as");
+
 #[derive(Debug)]
 pub(crate) enum AppOutput {}
 
@@ -44,6 +48,13 @@ impl SimpleComponent for AppModel {
 
     type Input = AppInput;
     type Output = AppOutput;
+
+    menu! {
+        main_menu: {
+            "Save" => Save,
+            "Save As" => SaveAs,
+        }
+    }
 
     view! {
         main_window = adw::ApplicationWindow {
@@ -57,6 +68,11 @@ impl SimpleComponent for AppModel {
 
                 adw::HeaderBar {
                     pack_start: model.open_button.widget(),
+
+                    pack_end = &gtk::MenuButton {
+                        set_icon_name: "open-menu-symbolic",
+                        set_menu_model: Some(&main_menu),
+                    },
                 },
 
                 adw::ToastOverlay {
