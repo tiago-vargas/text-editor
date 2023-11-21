@@ -2,7 +2,6 @@ use std::cell::Cell;
 use std::path::PathBuf;
 
 use gtk::prelude::*;
-use relm4::actions::{AccelsPlus, RelmAction, RelmActionGroup};
 use relm4::prelude::*;
 use relm4_components::open_button::{OpenButton, OpenButtonSettings};
 use relm4_components::open_dialog::OpenDialogSettings;
@@ -10,7 +9,12 @@ use relm4_components::save_dialog::{
     SaveDialog, SaveDialogMsg, SaveDialogResponse, SaveDialogSettings,
 };
 
+mod about;
+mod actions;
 mod content;
+mod help;
+mod keyboard_shortcuts;
+mod preferences;
 mod settings;
 
 use settings::Settings;
@@ -33,11 +37,12 @@ pub(crate) enum AppInput {
     ShowSaveDialog,
     ShowSavedToast,
     DoNothing,
-}
 
-relm4::new_action_group!(AppActions, "app");
-relm4::new_stateless_action!(Save, AppActions, "save");
-relm4::new_stateless_action!(SaveAs, AppActions, "save-as");
+    ShowPreferencesWindow,
+    ShowKeyboardShortcutsWindow,
+    ShowHelpWindow,
+    ShowAboutWindow,
+}
 
 #[derive(Debug)]
 pub(crate) enum AppOutput {}
@@ -51,8 +56,16 @@ impl SimpleComponent for AppModel {
 
     menu! {
         main_menu: {
-            "Save" => Save,
-            "Save As" => SaveAs,
+            section! {
+                "Save" => actions::Save,
+                "Save As" => actions::SaveAs,
+            },
+            section! {  // Standard primary menu items
+                "Preferences" => actions::ShowPreferences,
+                "Keyboard Shortcuts" => actions::ShowKeyboardShortcuts,
+                "Help" => actions::ShowHelp,
+                "About App" => actions::ShowAbout,
+            },
         }
     }
 
@@ -167,6 +180,30 @@ impl SimpleComponent for AppModel {
                 self.toast.set(Some(toast));
             }
             Self::Input::DoNothing => (),
+            Self::Input::ShowPreferencesWindow => {
+                let preferences_window = preferences::Model::builder()
+                    .launch(preferences::Init)
+                    .detach();
+                preferences_window.widget().present();
+            }
+            Self::Input::ShowKeyboardShortcutsWindow => {
+                let keyboard_shortcuts_window = keyboard_shortcuts::Model::builder()
+                    .launch(keyboard_shortcuts::Init)
+                    .detach();
+                keyboard_shortcuts_window.widget().present();
+            }
+            Self::Input::ShowHelpWindow => {
+                let help_window = help::Model::builder()
+                    .launch(help::Init)
+                    .detach();
+                help_window.widget().present();
+            }
+            Self::Input::ShowAboutWindow => {
+                let about_window = about::Model::builder()
+                    .launch(about::Init)
+                    .detach();
+                about_window.widget().present();
+            }
         }
     }
 
@@ -187,37 +224,5 @@ impl AppModel {
             settings::Settings::WindowMaximized.as_str(),
             widgets.main_window.is_maximized(),
         );
-    }
-
-    fn create_actions(
-        widgets: &<Self as SimpleComponent>::Widgets,
-        sender: &ComponentSender<Self>
-    ) {
-        let app = relm4::main_adw_application();
-
-        relm4::new_action_group!(AppActions, "app");
-        let mut app_actions = RelmActionGroup::<AppActions>::new();
-
-        relm4::new_stateless_action!(SaveAs, AppActions, "save-as");
-        let save_as = {
-            let sender = sender.clone();
-            RelmAction::<SaveAs>::new_stateless(move |_| {
-                sender.input(<Self as SimpleComponent>::Input::ShowSaveDialog);
-            })
-        };
-        app.set_accelerators_for_action::<SaveAs>(&["<primary><Shift>S"]);
-        app_actions.add_action(save_as);
-
-        relm4::new_stateless_action!(Save, AppActions, "save");
-        let save = {
-            let sender = sender.clone();
-            RelmAction::<Save>::new_stateless(move |_| {
-                sender.input(<Self as SimpleComponent>::Input::SaveCurrentFile);
-            })
-        };
-        app.set_accelerators_for_action::<Save>(&["<primary>S"]);
-        app_actions.add_action(save);
-
-        app_actions.register_for_widget(&widgets.main_window);
     }
 }
