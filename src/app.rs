@@ -9,15 +9,13 @@ use relm4_components::save_dialog::{
     SaveDialog, SaveDialogMsg, SaveDialogResponse, SaveDialogSettings,
 };
 
-mod about;
 mod actions;
 mod content;
-mod help;
-mod keyboard_shortcuts;
-mod preferences;
+mod modals;
 mod settings;
 
 use settings::Settings;
+use modals::*;
 
 pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
 
