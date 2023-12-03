@@ -48,9 +48,6 @@ impl SimpleComponent for AppModel {
     view! {
         main_window = adw::ApplicationWindow {
             set_title: Some("Text Editor"),
-            set_default_width: settings.int(Settings::WindowWidth.as_str()),
-            set_default_height: settings.int(Settings::WindowHeight.as_str()),
-            set_maximized: settings.boolean(Settings::WindowMaximized.as_str()),
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
@@ -74,8 +71,6 @@ impl SimpleComponent for AppModel {
         window: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let settings = gtk::gio::Settings::new(APP_ID);
-
         let content = content::ContentModel::builder()
             .launch(content::ContentInit)
             .detach();
@@ -106,6 +101,7 @@ impl SimpleComponent for AppModel {
 
         let widgets = view_output!();
 
+        Self::load_window_state(&widgets);
         Self::create_actions(&widgets, &sender);
 
         ComponentParts { model, widgets }
@@ -171,6 +167,20 @@ impl AppModel {
             settings::Settings::WindowMaximized.as_str(),
             widgets.main_window.is_maximized(),
         );
+    }
+
+    fn load_window_state(widgets: &<Self as SimpleComponent>::Widgets) {
+        let settings = gtk::gio::Settings::new(APP_ID);
+
+        let width = settings.int(Settings::WindowWidth.as_str());
+        let height = settings.int(Settings::WindowHeight.as_str());
+
+        widgets.main_window.set_default_size(width, height);
+
+        let is_maximized = settings.boolean(Settings::WindowMaximized.as_str());
+        if is_maximized {
+            widgets.main_window.maximize();
+        }
     }
 
     fn create_actions(
