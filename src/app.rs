@@ -13,8 +13,6 @@ use relm4_components::save_dialog::{
 mod content;
 mod settings;
 
-use settings::Settings;
-
 pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
 
 pub(crate) struct AppModel {
@@ -156,33 +154,6 @@ impl SimpleComponent for AppModel {
 }
 
 impl AppModel {
-    fn save_window_state(widgets: &<Self as SimpleComponent>::Widgets) {
-        let settings = gtk::gio::Settings::new(APP_ID);
-
-        let (width, height) = widgets.main_window.default_size();
-        let _ = settings.set_int(settings::Settings::WindowWidth.as_str(), width);
-        let _ = settings.set_int(settings::Settings::WindowHeight.as_str(), height);
-
-        let _ = settings.set_boolean(
-            settings::Settings::WindowMaximized.as_str(),
-            widgets.main_window.is_maximized(),
-        );
-    }
-
-    fn load_window_state(widgets: &<Self as SimpleComponent>::Widgets) {
-        let settings = gtk::gio::Settings::new(APP_ID);
-
-        let width = settings.int(Settings::WindowWidth.as_str());
-        let height = settings.int(Settings::WindowHeight.as_str());
-
-        widgets.main_window.set_default_size(width, height);
-
-        let is_maximized = settings.boolean(Settings::WindowMaximized.as_str());
-        if is_maximized {
-            widgets.main_window.maximize();
-        }
-    }
-
     fn create_actions(
         widgets: &<Self as SimpleComponent>::Widgets,
         sender: &ComponentSender<Self>
