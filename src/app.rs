@@ -179,16 +179,15 @@ impl SimpleComponent for AppModel {
             }
             Self::Input::DoNothing => (),
             Self::Input::ShowPreferencesWindow => {
-                let app = relm4::main_adw_application();
+                let app = relm4::main_application();
                 let main_window = app.windows().first()
-                    .expect("Application will have at least one window")
+                    .expect("Event should have been triggered by last focused window, thus first item")
                     .clone();
 
                 let preferences_window = preferences::Model::builder()
-                    .transient_for(main_window)
+                    .transient_for(&main_window)
                     .launch(preferences::Init)
                     .detach();
-                preferences_window.widget().set_modal(true);
 
                 preferences_window.widget().present();
             }

@@ -20,6 +20,7 @@ impl SimpleComponent for Model {
     view! {
         adw::Window {
             set_title: Some("Preferences"),
+            set_modal: true,
 
             adw::HeaderBar,
         }
