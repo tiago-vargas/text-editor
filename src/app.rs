@@ -21,6 +21,7 @@ pub(crate) struct AppModel {
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
     opened_path: Option<PathBuf>,
+    opened_path_string: Option<String>,
     opened_file_name: Option<String>,
     toast: Cell<Option<adw::Toast>>,
 }
@@ -48,13 +49,19 @@ impl SimpleComponent for AppModel {
 
     view! {
         main_window = adw::ApplicationWindow {
-            #[watch] set_title: Some(model.opened_file_name.as_ref().map_or("Text Editor", |s| s.as_str())),
-
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
 
                 adw::HeaderBar {
                     pack_start: model.open_button.widget(),
+
+                    #[wrap(Some)]
+                    set_title_widget = &adw::WindowTitle {
+                        #[watch] set_title: model.opened_file_name.as_ref()
+                            .unwrap_or(&String::from("Text Editor")),
+                        #[watch] set_subtitle: model.opened_path_string.as_ref()
+                            .unwrap_or(&String::from("")),
+                    },
                 },
 
                 adw::ToastOverlay {
@@ -97,6 +104,7 @@ impl SimpleComponent for AppModel {
             open_button,
             save_dialog,
             opened_path: None::<PathBuf>,
+            opened_path_string: None,
             opened_file_name: None,
             toast: Cell::new(None),
         };
@@ -154,6 +162,10 @@ impl SimpleComponent for AppModel {
                 self.opened_file_name = path
                     .and_then(|p| p.file_name().map(|s| OsString::from(s)))
                     .and_then(|s| s.to_str().map(|s| String::from(s)));
+
+                let path = self.opened_path.clone();
+                self.opened_path_string = path
+                    .and_then(|p| p.to_str().map(|s| String::from(s)));
             }
             Self::Input::DoNothing => (),
         }
