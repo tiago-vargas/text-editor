@@ -103,7 +103,7 @@ impl SimpleComponent for AppModel {
             content,
             open_button,
             save_dialog,
-            opened_path: None::<PathBuf>,
+            opened_path: None,
             opened_path_string: None,
             opened_file_name: None,
             toast: Cell::new(None),
