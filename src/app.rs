@@ -1,4 +1,5 @@
 use std::cell::Cell;
+use std::ffi::OsString;
 use std::path::PathBuf;
 
 use gtk::prelude::*;
@@ -20,6 +21,7 @@ pub(crate) struct AppModel {
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
     opened_path: Option<PathBuf>,
+    opened_file_name: Option<String>,
     toast: Cell<Option<adw::Toast>>,
 }
 
@@ -30,6 +32,7 @@ pub(crate) enum AppInput {
     SaveCurrentFile,
     ShowSaveDialog,
     ShowSavedToast,
+    UpdateNameAndPath,
     DoNothing,
 }
 
@@ -45,7 +48,7 @@ impl SimpleComponent for AppModel {
 
     view! {
         main_window = adw::ApplicationWindow {
-            set_title: Some("Text Editor"),
+            #[watch] set_title: Some(model.opened_file_name.as_ref().map_or("Text Editor", |s| s.as_str())),
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
@@ -94,6 +97,7 @@ impl SimpleComponent for AppModel {
             open_button,
             save_dialog,
             opened_path: None::<PathBuf>,
+            opened_file_name: None,
             toast: Cell::new(None),
         };
 
@@ -114,6 +118,7 @@ impl SimpleComponent for AppModel {
                         self.content
                             .emit(content::ContentInput::SetContent(text));
                         self.opened_path = Some(path);
+                        sender.input(Self::Input::UpdateNameAndPath);
                     }
                     Err(error) =>  eprintln!("Error reading file: {}", error),
                 }
@@ -143,6 +148,12 @@ impl SimpleComponent for AppModel {
                     .timeout(2)
                     .build();
                 self.toast.set(Some(toast));
+            }
+            Self::Input::UpdateNameAndPath => {
+                let path = self.opened_path.clone();
+                self.opened_file_name = path
+                    .and_then(|p| p.file_name().map(|s| OsString::from(s)))
+                    .and_then(|s| s.to_str().map(|s| String::from(s)));
             }
             Self::Input::DoNothing => (),
         }
