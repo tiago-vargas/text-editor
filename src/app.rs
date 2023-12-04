@@ -1,8 +1,8 @@
 use std::cell::Cell;
+use std::ffi::OsString;
 use std::path::PathBuf;
 
 use gtk::prelude::*;
-use relm4::actions::{AccelsPlus, RelmAction, RelmActionGroup};
 use relm4::prelude::*;
 use relm4_components::open_button::{OpenButton, OpenButtonSettings};
 use relm4_components::open_dialog::OpenDialogSettings;
@@ -10,10 +10,9 @@ use relm4_components::save_dialog::{
     SaveDialog, SaveDialogMsg, SaveDialogResponse, SaveDialogSettings,
 };
 
+mod actions;
 mod content;
 mod settings;
-
-use settings::Settings;
 
 pub(crate) const APP_ID: &str = "com.github.tiago_vargas.text_editor";
 
@@ -22,6 +21,8 @@ pub(crate) struct AppModel {
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
     opened_path: Option<PathBuf>,
+    opened_path_string: Option<String>,
+    opened_file_name: Option<String>,
     toast: Cell<Option<adw::Toast>>,
 }
 
@@ -32,6 +33,7 @@ pub(crate) enum AppInput {
     SaveCurrentFile,
     ShowSaveDialog,
     ShowSavedToast,
+    UpdateNameAndPath,
     DoNothing,
 }
 
@@ -47,16 +49,19 @@ impl SimpleComponent for AppModel {
 
     view! {
         main_window = adw::ApplicationWindow {
-            set_title: Some("Text Editor"),
-            set_default_width: settings.int(Settings::WindowWidth.as_str()),
-            set_default_height: settings.int(Settings::WindowHeight.as_str()),
-            set_maximized: settings.boolean(Settings::WindowMaximized.as_str()),
-
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
 
                 adw::HeaderBar {
                     pack_start: model.open_button.widget(),
+
+                    #[wrap(Some)]
+                    set_title_widget = &adw::WindowTitle {
+                        #[watch] set_title: model.opened_file_name.as_ref()
+                            .unwrap_or(&String::from("Untitled")),
+                        #[watch] set_subtitle: model.opened_path_string.as_ref()
+                            .unwrap_or(&String::from("")),
+                    },
                 },
 
                 adw::ToastOverlay {
@@ -74,8 +79,6 @@ impl SimpleComponent for AppModel {
         window: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let settings = gtk::gio::Settings::new(APP_ID);
-
         let content = content::ContentModel::builder()
             .launch(content::ContentInit)
             .detach();
@@ -100,12 +103,15 @@ impl SimpleComponent for AppModel {
             content,
             open_button,
             save_dialog,
-            opened_path: None::<PathBuf>,
+            opened_path: None,
+            opened_path_string: None,
+            opened_file_name: None,
             toast: Cell::new(None),
         };
 
         let widgets = view_output!();
 
+        Self::load_window_state(&widgets);
         Self::create_actions(&widgets, &sender);
 
         ComponentParts { model, widgets }
@@ -120,6 +126,7 @@ impl SimpleComponent for AppModel {
                         self.content
                             .emit(content::ContentInput::SetContent(text));
                         self.opened_path = Some(path);
+                        sender.input(Self::Input::UpdateNameAndPath);
                     }
                     Err(error) =>  eprintln!("Error reading file: {}", error),
                 }
@@ -150,58 +157,21 @@ impl SimpleComponent for AppModel {
                     .build();
                 self.toast.set(Some(toast));
             }
+            Self::Input::UpdateNameAndPath => {
+                let path = self.opened_path.clone();
+                self.opened_file_name = path
+                    .and_then(|p| p.file_name().map(|s| OsString::from(s)))
+                    .and_then(|s| s.to_str().map(|s| String::from(s)));
+
+                let path = self.opened_path.clone();
+                self.opened_path_string = path
+                    .and_then(|p| p.to_str().map(|s| String::from(s)));
+            }
             Self::Input::DoNothing => (),
         }
     }
 
     fn shutdown(&mut self, widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
         Self::save_window_state(&widgets);
-    }
-}
-
-impl AppModel {
-    fn save_window_state(widgets: &<Self as SimpleComponent>::Widgets) {
-        let settings = gtk::gio::Settings::new(APP_ID);
-
-        let (width, height) = widgets.main_window.default_size();
-        let _ = settings.set_int(settings::Settings::WindowWidth.as_str(), width);
-        let _ = settings.set_int(settings::Settings::WindowHeight.as_str(), height);
-
-        let _ = settings.set_boolean(
-            settings::Settings::WindowMaximized.as_str(),
-            widgets.main_window.is_maximized(),
-        );
-    }
-
-    fn create_actions(
-        widgets: &<Self as SimpleComponent>::Widgets,
-        sender: &ComponentSender<Self>
-    ) {
-        let app = relm4::main_adw_application();
-
-        relm4::new_action_group!(AppActions, "app");
-        let mut app_actions = RelmActionGroup::<AppActions>::new();
-
-        relm4::new_stateless_action!(SaveAs, AppActions, "save-as");
-        let save_as = {
-            let sender = sender.clone();
-            RelmAction::<SaveAs>::new_stateless(move |_| {
-                sender.input(<Self as SimpleComponent>::Input::ShowSaveDialog);
-            })
-        };
-        app.set_accelerators_for_action::<SaveAs>(&["<primary><Shift>S"]);
-        app_actions.add_action(save_as);
-
-        relm4::new_stateless_action!(Save, AppActions, "save");
-        let save = {
-            let sender = sender.clone();
-            RelmAction::<Save>::new_stateless(move |_| {
-                sender.input(<Self as SimpleComponent>::Input::SaveCurrentFile);
-            })
-        };
-        app.set_accelerators_for_action::<Save>(&["<primary>S"]);
-        app_actions.add_action(save);
-
-        app_actions.register_for_widget(&widgets.main_window);
     }
 }
