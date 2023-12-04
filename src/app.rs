@@ -58,7 +58,7 @@ impl SimpleComponent for AppModel {
                     #[wrap(Some)]
                     set_title_widget = &adw::WindowTitle {
                         #[watch] set_title: model.opened_file_name.as_ref()
-                            .unwrap_or(&String::from("Text Editor")),
+                            .unwrap_or(&String::from("Untitled")),
                         #[watch] set_subtitle: model.opened_path_string.as_ref()
                             .unwrap_or(&String::from("")),
                     },
