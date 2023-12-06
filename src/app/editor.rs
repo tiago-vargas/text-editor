@@ -5,6 +5,7 @@ use relm4::prelude::*;
 
 pub(crate) struct Model {
     pub(crate) text_buffer: gtk::TextBuffer,
+    pub(crate) opened_path: Option<PathBuf>,
     pub(crate) opened_path_string: Option<String>,
     pub(crate) opened_file_name: Option<String>,
 }
@@ -14,6 +15,7 @@ pub(crate) struct Init;
 #[derive(Debug)]
 pub(crate) enum Input {
     SetContent(String),
+    SetOpenedPath(PathBuf),
     UpdateNameAndPath(PathBuf),
 }
 
@@ -50,6 +52,7 @@ impl SimpleComponent for Model {
         let text_buffer = gtk::TextBuffer::default();
         let model = Self {
             text_buffer,
+            opened_path: None,
             opened_path_string: None,
             opened_file_name: None,
         };
@@ -63,6 +66,10 @@ impl SimpleComponent for Model {
         match message {
             Self::Input::SetContent(text) => {
                 self.text_buffer.set_text(&text);
+            }
+            Self::Input::SetOpenedPath(path) => {
+                self.opened_path = Some(path.clone());
+                sender.input(Self::Input::UpdateNameAndPath(path));
             }
             Self::Input::UpdateNameAndPath(path) => {
                 self.opened_path_string = Some(path.clone())

@@ -19,7 +19,6 @@ pub(crate) struct AppModel {
     editor: Controller<editor::Model>,
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
-    opened_path: Option<PathBuf>,
     toast: Cell<Option<adw::Toast>>,
 }
 
@@ -100,7 +99,6 @@ impl SimpleComponent for AppModel {
             editor,
             open_button,
             save_dialog,
-            opened_path: None,
             toast: Cell::new(None),
         };
 
@@ -120,14 +118,14 @@ impl SimpleComponent for AppModel {
                     Ok(text) => {
                         self.editor
                             .emit(editor::Input::SetContent(text));
-                        self.opened_path = Some(path.clone());
+                        self.editor.emit(editor::Input::SetOpenedPath(path.clone()));
                         self.editor.emit(editor::Input::UpdateNameAndPath(path));
                     }
                     Err(error) =>  eprintln!("Error reading file: {}", error),
                 }
             }
             Self::Input::SaveCurrentFile => {
-                match &self.opened_path {
+                match &self.editor.model().opened_path {
                     Some(path) => sender.input(Self::Input::SaveFile(path.clone())),
                     None => sender.input(Self::Input::ShowSaveDialog),
                 }
