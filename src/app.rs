@@ -77,7 +77,7 @@ impl SimpleComponent for AppModel {
         let editor = editor::Model::builder()
             .launch(editor::Init)
             .forward(sender.input_sender(),  |output| match output {
-                editor::Output::UpdateNameAndPath(_path) => Self::Input::DoNothing,
+                editor::Output::Sync => Self::Input::DoNothing,
             });
         let open_button = OpenButton::builder()
             .launch(OpenButtonSettings {

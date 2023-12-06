@@ -19,7 +19,7 @@ pub(crate) enum Input {
 
 #[derive(Debug)]
 pub(crate) enum Output {
-    UpdateNameAndPath(PathBuf),
+    Sync,
 }
 
 #[relm4::component(pub(crate))]
@@ -70,7 +70,7 @@ impl SimpleComponent for Model {
                 self.opened_file_name = Some(path.clone())
                     .and_then(|p| p.file_name().map(|s| OsString::from(s)))
                     .and_then(|s| s.to_str().map(|s| String::from(s)));
-                let _ = sender.output(Self::Output::UpdateNameAndPath(path));
+                let _ = sender.output(Self::Output::Sync);
             }
         }
     }
