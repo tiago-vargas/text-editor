@@ -30,7 +30,6 @@ pub(crate) enum AppInput {
     SaveCurrentFile,
     ShowSaveDialog,
     ShowSavedToast,
-    UpdateNameAndPath,
     DoNothing,
 }
 
@@ -151,7 +150,6 @@ impl SimpleComponent for AppModel {
                     .build();
                 self.toast.set(Some(toast));
             }
-            Self::Input::UpdateNameAndPath => (),
             Self::Input::DoNothing => (),
         }
     }
