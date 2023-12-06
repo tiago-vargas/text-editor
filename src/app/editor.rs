@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, ffi::OsString};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
@@ -6,6 +6,7 @@ use relm4::prelude::*;
 pub(crate) struct Model {
     pub(crate) text_buffer: gtk::TextBuffer,
     pub(crate) opened_path_string: Option<String>,
+    pub(crate) opened_file_name: Option<String>,
 }
 
 pub(crate) struct Init;
@@ -50,6 +51,7 @@ impl SimpleComponent for Model {
         let model = Self {
             text_buffer,
             opened_path_string: None,
+            opened_file_name: None,
         };
 
         let widgets = view_output!();
@@ -65,6 +67,9 @@ impl SimpleComponent for Model {
             Self::Input::UpdateNameAndPath(path) => {
                 self.opened_path_string = Some(path.clone())
                     .and_then(|p| p.to_str().map(|s| String::from(s)));
+                self.opened_file_name = Some(path.clone())
+                    .and_then(|p| p.file_name().map(|s| OsString::from(s)))
+                    .and_then(|s| s.to_str().map(|s| String::from(s)));
                 let _ = sender.output(Self::Output::UpdateNameAndPath(path));
             }
         }

@@ -1,5 +1,4 @@
 use std::cell::Cell;
-use std::ffi::OsString;
 use std::path::PathBuf;
 
 use gtk::prelude::*;
@@ -21,7 +20,6 @@ pub(crate) struct AppModel {
     open_button: Controller<OpenButton>,
     save_dialog: Controller<SaveDialog>,
     opened_path: Option<PathBuf>,
-    opened_file_name: Option<String>,
     toast: Cell<Option<adw::Toast>>,
 }
 
@@ -56,7 +54,7 @@ impl SimpleComponent for AppModel {
 
                     #[wrap(Some)]
                     set_title_widget = &adw::WindowTitle {
-                        #[watch] set_title: model.opened_file_name.as_ref()
+                        #[watch] set_title: model.editor.model().opened_file_name.as_ref()
                             .unwrap_or(&String::from("Untitled")),
                         #[watch] set_subtitle: model.editor.model().opened_path_string.as_ref()
                             .unwrap_or(&String::from("")),
@@ -104,7 +102,6 @@ impl SimpleComponent for AppModel {
             open_button,
             save_dialog,
             opened_path: None,
-            opened_file_name: None,
             toast: Cell::new(None),
         };
 
@@ -154,11 +151,7 @@ impl SimpleComponent for AppModel {
                     .build();
                 self.toast.set(Some(toast));
             }
-            Self::Input::UpdateNameAndPath => {
-                self.opened_file_name = self.opened_path.clone()
-                    .and_then(|p| p.file_name().map(|s| OsString::from(s)))
-                    .and_then(|s| s.to_str().map(|s| String::from(s)));
-            }
+            Self::Input::UpdateNameAndPath => (),
             Self::Input::DoNothing => (),
         }
     }
