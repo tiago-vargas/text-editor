@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use gtk::prelude::*;
 use relm4::prelude::*;
 
@@ -10,10 +12,13 @@ pub(crate) struct Init;
 #[derive(Debug)]
 pub(crate) enum Input {
     SetContent(String),
+    UpdateNameAndPath(PathBuf),
 }
 
 #[derive(Debug)]
-pub(crate) enum Output {}
+pub(crate) enum Output {
+    UpdateNameAndPath(PathBuf),
+}
 
 #[relm4::component(pub(crate))]
 impl SimpleComponent for Model {
@@ -48,10 +53,13 @@ impl SimpleComponent for Model {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             Self::Input::SetContent(text) => {
                 self.text_buffer.set_text(&text);
+            }
+            Self::Input::UpdateNameAndPath(path) => {
+                let _ = sender.output(Self::Output::UpdateNameAndPath(path));
             }
         }
     }

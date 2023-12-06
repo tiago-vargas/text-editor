@@ -80,7 +80,9 @@ impl SimpleComponent for AppModel {
     ) -> ComponentParts<Self> {
         let editor = editor::Model::builder()
             .launch(editor::Init)
-            .detach();
+            .forward(sender.input_sender(),  |output| match output {
+                editor::Output::UpdateNameAndPath(_path) => Self::Input::DoNothing,
+            });
         let open_button = OpenButton::builder()
             .launch(OpenButtonSettings {
                 dialog_settings: OpenDialogSettings::default(),
@@ -124,8 +126,8 @@ impl SimpleComponent for AppModel {
                     Ok(text) => {
                         self.editor
                             .emit(editor::Input::SetContent(text));
-                        self.opened_path = Some(path);
-                        sender.input(Self::Input::UpdateNameAndPath);
+                        self.opened_path = Some(path.clone());
+                        self.editor.emit(editor::Input::UpdateNameAndPath(path));
                     }
                     Err(error) =>  eprintln!("Error reading file: {}", error),
                 }
@@ -155,13 +157,11 @@ impl SimpleComponent for AppModel {
                 self.toast.set(Some(toast));
             }
             Self::Input::UpdateNameAndPath => {
-                let path = self.opened_path.clone();
-                self.opened_file_name = path
+                self.opened_file_name = self.opened_path.clone()
                     .and_then(|p| p.file_name().map(|s| OsString::from(s)))
                     .and_then(|s| s.to_str().map(|s| String::from(s)));
 
-                let path = self.opened_path.clone();
-                self.opened_path_string = path
+                self.opened_path_string = self.opened_path.clone()
                     .and_then(|p| p.to_str().map(|s| String::from(s)));
             }
             Self::Input::DoNothing => (),
