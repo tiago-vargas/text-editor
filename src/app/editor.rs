@@ -1,7 +1,9 @@
-use std::{path::PathBuf, ffi::OsString};
+use super::AppInput;
 
 use gtk::prelude::*;
 use relm4::prelude::*;
+
+use std::{path::PathBuf, ffi::OsString};
 
 pub(crate) struct Model {
     pub(crate) text_buffer: gtk::TextBuffer,
@@ -24,12 +26,16 @@ pub(crate) enum Output {
     Sync,
 }
 
-#[relm4::component(pub(crate))]
-impl SimpleComponent for Model {
+#[relm4::factory(pub(crate))]
+impl FactoryComponent for Model {
     type Init = Init;
 
     type Input = Input;
     type Output = Output;
+
+    type CommandOutput = ();
+    type ParentInput = AppInput;
+    type ParentWidget = adw::TabView;
 
     view! {
         gtk::ScrolledWindow {
@@ -39,30 +45,26 @@ impl SimpleComponent for Model {
             gtk::TextView {
                 set_margin_all: 8,
                 set_monospace: true,
-                set_buffer: Some(&model.text_buffer),
+                set_buffer: Some(&self.text_buffer),
             }
         }
     }
 
-    fn init(
-        _init: Self::Init,
-        root: &Self::Root,
-        _sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+    fn init_model(
+        _payload: Self::Init,
+        _index: &DynamicIndex,
+        _sender: FactorySender<Self>,
+    ) -> Self {
         let text_buffer = gtk::TextBuffer::default();
-        let model = Self {
+        Self {
             text_buffer,
             opened_path: None,
             opened_path_string: None,
             opened_file_name: None,
-        };
-
-        let widgets = view_output!();
-
-        ComponentParts { model, widgets }
+        }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: FactorySender<Self>) {
         match message {
             Self::Input::SetContent(text) => {
                 self.text_buffer.set_text(&text);
@@ -79,6 +81,12 @@ impl SimpleComponent for Model {
                     .and_then(|s| s.to_str().map(|s| String::from(s)));
                 let _ = sender.output(Self::Output::Sync);
             }
+        }
+    }
+
+    fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
+        match output {
+            Self::Output::Sync => Some(AppInput::DoNothing),
         }
     }
 }
