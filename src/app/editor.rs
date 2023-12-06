@@ -5,6 +5,7 @@ use relm4::prelude::*;
 
 pub(crate) struct Model {
     pub(crate) text_buffer: gtk::TextBuffer,
+    pub(crate) opened_path_string: Option<String>,
 }
 
 pub(crate) struct Init;
@@ -46,7 +47,10 @@ impl SimpleComponent for Model {
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let text_buffer = gtk::TextBuffer::default();
-        let model = Self { text_buffer };
+        let model = Self {
+            text_buffer,
+            opened_path_string: None,
+        };
 
         let widgets = view_output!();
 
@@ -59,6 +63,8 @@ impl SimpleComponent for Model {
                 self.text_buffer.set_text(&text);
             }
             Self::Input::UpdateNameAndPath(path) => {
+                self.opened_path_string = Some(path.clone())
+                    .and_then(|p| p.to_str().map(|s| String::from(s)));
                 let _ = sender.output(Self::Output::UpdateNameAndPath(path));
             }
         }
