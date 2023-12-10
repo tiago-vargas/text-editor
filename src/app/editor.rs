@@ -1,9 +1,9 @@
-use std::{path::PathBuf, ffi::OsString};
-
 use super::AppInput;
 
 use gtk::prelude::*;
 use relm4::prelude::*;
+
+use std::{path::PathBuf, ffi::OsString};
 
 pub(crate) struct Model {
     pub(crate) text_buffer: gtk::TextBuffer,
@@ -84,7 +84,7 @@ impl FactoryComponent for Model {
         }
     }
 
-    fn forward_to_parent(output: <Self as FactoryComponent>::Output) -> Option<<Self as FactoryComponent>::ParentInput> {
+    fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
         match output {
             Self::Output::Sync => Some(AppInput::DoNothing),
         }
