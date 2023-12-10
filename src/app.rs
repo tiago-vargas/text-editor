@@ -31,6 +31,7 @@ pub(crate) enum AppInput {
     ShowSaveDialog,
     ShowSavedToast,
     NewEditor,
+    UpdateWindowTitle,
     DoNothing,
 }
 
@@ -44,6 +45,13 @@ impl SimpleComponent for AppModel {
     type Input = AppInput;
     type Output = AppOutput;
 
+    fn pre_view() {
+        // if self.editors.len() == 0 {
+        //     // self.editors.push_back(editor::Init);
+        //     sender.input(Self::Input::NewEditor);
+        // }
+    }
+
     view! {
         main_window = adw::ApplicationWindow {
             gtk::Box {
@@ -55,10 +63,11 @@ impl SimpleComponent for AppModel {
 
                     #[wrap(Some)]
                     set_title_widget = &adw::WindowTitle {
-                        #[watch] set_title: model.editors.get(0).unwrap().opened_file_name.as_ref()
-                            .unwrap_or(&String::from("Untitled")),
-                        #[watch] set_subtitle: model.editors.get(0).unwrap().opened_path_string.as_ref()
-                            .unwrap_or(&String::from("")),
+                        // #[watch] set_title: model.editors.get(0).unwrap().opened_file_name.as_ref()
+                        //     .unwrap_or(&String::from("Untitled")),
+                        // #[watch] set_subtitle: model.editors.get(0).unwrap().opened_path_string.as_ref()
+                        //     .unwrap_or(&String::from("")),
+                        set_title: "Untitled",
                     },
                 },
 
@@ -87,7 +96,7 @@ impl SimpleComponent for AppModel {
     ) -> ComponentParts<Self> {
         let editors = FactoryVecDeque::new(adw::TabView::default(), sender.input_sender());
         let open_button = OpenButton::builder()
-            .launch(OpenButtonSettings {
+        .launch(OpenButtonSettings {
                 dialog_settings: OpenDialogSettings::default(),
                 text: "Open",
                 recently_opened_files: None,
@@ -95,9 +104,9 @@ impl SimpleComponent for AppModel {
             })
             .forward(sender.input_sender(), Self::Input::OpenFile);
         let save_dialog = SaveDialog::builder()
-            .transient_for_native(window)
-            .launch(SaveDialogSettings::default())
-            .forward(sender.input_sender(), |response| {
+        .transient_for_native(window)
+        .launch(SaveDialogSettings::default())
+        .forward(sender.input_sender(), |response| {
                 match response {
                     SaveDialogResponse::Accept(path) => Self::Input::SaveFile(path),
                     SaveDialogResponse::Cancel => Self::Input::DoNothing,
@@ -109,6 +118,7 @@ impl SimpleComponent for AppModel {
             save_dialog,
             toast: Cell::new(None),
         };
+        sender.input(Self::Input::NewEditor);
 
         let editor_tabs = model.editors.widget();
         let widgets = view_output!();
@@ -116,7 +126,8 @@ impl SimpleComponent for AppModel {
         Self::load_window_state(&widgets);
         Self::create_actions(&widgets, &sender);
 
-        sender.input(Self::Input::NewEditor);
+
+        println!("Vec: {:#?}", model.editors.len());
 
         ComponentParts { model, widgets }
     }
@@ -164,7 +175,9 @@ impl SimpleComponent for AppModel {
             }
             Self::Input::NewEditor => {
                 self.editors.guard().push_back(editor::Init);
+                println!("Added new editor #{:#?}", self.editors.len());
             }
+            Self::Input::UpdateWindowTitle => {}
             Self::Input::DoNothing => (),
         }
     }
