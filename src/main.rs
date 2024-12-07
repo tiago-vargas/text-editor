@@ -16,5 +16,5 @@ fn main() {
 	let app = main_application();
 	app.set_resource_base_path(Some(RESOURCE_PREFIX));
 	let app = RelmApp::from_app(app);
-	app.run::<app::Model>(app::Init);
+	app.run::<app::Model>(());
 }

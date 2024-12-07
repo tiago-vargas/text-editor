@@ -1,23 +1,28 @@
 use adw::prelude::*;
+use gtk::gio;
 use relm4::prelude::*;
 
 use crate::config::{BUILD_TYPE, RESOURCE_PREFIX};
 
 mod actions;
-mod content;
+mod editor;
 mod modals;
 mod settings;
 
 pub(crate) struct Model {
-	content: Controller<content::Model>,
+	editor: Controller<editor::Editor>,
 }
 
-pub(crate) struct Init;
+#[derive(Debug)]
+pub(crate) enum Input {
+	ShowOpenFileDialog,
+	ShowFileContents(gio::File),
+}
 
 #[relm4::component(pub(crate))]
 impl SimpleComponent for Model {
-	type Init = Init;
-	type Input = ();
+	type Init = ();
+	type Input = Input;
 	type Output = ();
 
 	menu! {
@@ -45,6 +50,13 @@ impl SimpleComponent for Model {
 
 			adw::ToolbarView {
 				add_top_bar = &adw::HeaderBar {
+					pack_start = &gtk::Button {
+						set_label: "Open",
+						set_tooltip_text: Some("Open File"),
+
+						connect_clicked => Input::ShowOpenFileDialog,
+					},
+
 					pack_end = &gtk::MenuButton {
 						set_icon_name: "open-menu-symbolic",
 						set_menu_model: Some(&primary_menu),
@@ -52,7 +64,7 @@ impl SimpleComponent for Model {
 					},
 				},
 
-				model.content.widget(),
+				model.editor.widget(),
 			},
 		}
 	}
@@ -62,8 +74,8 @@ impl SimpleComponent for Model {
 		window: Self::Root,
 		sender: ComponentSender<Self>,
 	) -> ComponentParts<Self> {
-		let content = content::Model::builder().launch(content::Init).detach();
-		let model = Model { content };
+		let editor = editor::Editor::builder().launch(()).detach();
+		let model = Model { editor };
 
 		let widgets = view_output!();
 
@@ -73,8 +85,36 @@ impl SimpleComponent for Model {
 		ComponentParts { model, widgets }
 	}
 
-	fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
-		let () = message;
+	fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+		match message {
+			Input::ShowOpenFileDialog => {
+				let app = relm4::main_application();
+				let main_window = app
+					.windows()
+					.first()
+					.expect(
+						"Event should have been triggered by last focused window, thus first item",
+					)
+					.clone();
+
+				let dialog = gtk::FileDialog::builder()
+					.title("Open File")
+					.modal(true)
+					.build();
+				dialog.open(
+					Some(&main_window),
+					None::<&gio::Cancellable>,
+					move |result| {
+						if let Ok(selected_file) = result {
+							sender.input(Input::ShowFileContents(selected_file));
+						}
+					},
+				)
+			}
+			Input::ShowFileContents(file) => {
+				let _ = self.editor.sender().send(editor::Input::OpenFile(file));
+			}
+		}
 	}
 
 	fn shutdown(&mut self, widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
