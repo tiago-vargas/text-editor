@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=text-editor
+Exec=text-editor
+Icon=io.github.tiago_vargas.text_editor
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true
+DBusActivatable=true

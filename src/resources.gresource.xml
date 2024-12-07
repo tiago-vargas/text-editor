@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+	<gresource prefix="/io/github/tiago_vargas/text_editor">
+		<file preprocess="xml-stripblanks">app/modals/keyboard-shortcuts-window.ui</file>
+	</gresource>
+
+	<gresource prefix="/io/github/tiago_vargas/text_editor/icons/scalable/actions">
+		<file compressed="true" preprocess="xml-stripblanks" alias="globe-alt-symbolic.svg">../data/icons/globe-alt-symbolic.svg</file>
+	</gresource>
+</gresources>

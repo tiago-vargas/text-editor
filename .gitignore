@@ -1,0 +1,9 @@
+# Cargo build files
+/target/
+
+# Flatpak build files
+/.flatpak/
+/.flatpak-builder/
+
+# VS Code configuration files
+/.vscode/

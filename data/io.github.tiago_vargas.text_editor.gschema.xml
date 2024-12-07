@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+	<schema id="io.github.tiago_vargas.text_editor"
+	        path="/io/github/tiago_vargas/text_editor/">
+		<key name="window-width" type="i">
+			<default>600</default>
+			<summary>Default window width</summary>
+		</key>
+		<key name="window-height" type="i">
+			<default>400</default>
+			<summary>Default window height</summary>
+		</key>
+		<key name="window-maximized" type="b">
+			<default>false</default>
+			<summary>Default window maximized behaviour</summary>
+		</key>
+	</schema>
+</schemalist>
