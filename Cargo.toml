@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 relm4 = { version = "0.9.1", features = ["gnome_47", "libadwaita"] }
+source = { version = "0.9.1", package = "sourceview5" }
