@@ -4,8 +4,9 @@ use relm4::{factory::FactoryView, prelude::*};
 use source::{gio, prelude::*};
 
 pub(crate) struct Editor {
-	file: Option<gio::File>,
+	pub(crate) file: Option<gio::File>,
 	pub(crate) title: std::path::PathBuf,
+	pub(crate) path: std::path::PathBuf,
 	text_buffer: source::Buffer,
 }
 
@@ -48,6 +49,7 @@ impl FactoryComponent for Editor {
 		let model = Self {
 			file: None,
 			title: Default::default(),
+			path: Default::default(),
 			text_buffer: Default::default(),
 		};
 
@@ -86,6 +88,7 @@ impl FactoryComponent for Editor {
 				);
 
 				self.title = self.file.as_ref().unwrap().basename().unwrap();
+				self.path = self.file.as_ref().unwrap().path().unwrap();
 			}
 		}
 	}

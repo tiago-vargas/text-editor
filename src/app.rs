@@ -38,12 +38,6 @@ impl SimpleComponent for Model {
 
 	view! {
 		main_window = adw::ApplicationWindow {
-			#[watch] set_title: model.active_tab.map_or(
-				Some("Text Editor"),
-				// |i| model.editors.get(i).unwrap().title.to_str(),
-				|i| {println!("AAAAAAAA {:?}", model.editors.get(i)); model.editors.get(i).unwrap().title.to_str()},
-			),
-
 			add_css_class?: if BUILD_TYPE == "debug" { Some("devel") } else { None },
 
 			#[wrap(Some)]
@@ -64,6 +58,18 @@ impl SimpleComponent for Model {
 							set_tooltip_text: Some("Open File"),
 
 							connect_clicked => Input::ShowOpenFileDialog,
+						},
+
+						#[wrap(Some)]
+						set_title_widget = &adw::WindowTitle {
+							#[watch] set_title: model.active_tab.map_or(
+								"Text Editor",
+								|i| model.editors.get(i).unwrap().title.to_str().unwrap(),
+							),
+
+							#[watch] set_subtitle: model.active_tab.map(
+								|i| model.editors.get(i).unwrap().path.to_str().unwrap(),
+							).unwrap_or_default(),
 						},
 
 						pack_end = &gtk::MenuButton {
