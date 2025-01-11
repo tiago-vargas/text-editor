@@ -10,7 +10,7 @@ mod modals;
 mod settings;
 
 pub(crate) struct Model {
-	editor: Controller<editor::Editor>,
+	editors: FactoryVecDeque<editor::Editor>,
 }
 
 #[derive(Debug)]
@@ -49,22 +49,31 @@ impl SimpleComponent for Model {
 				.unwrap() -> gtk::ShortcutsWindow,
 
 			adw::ToolbarView {
-				add_top_bar = &adw::HeaderBar {
-					pack_start = &gtk::Button {
-						set_label: "Open",
-						set_tooltip_text: Some("Open File"),
+				add_top_bar = &gtk::Box {
+					set_orientation: gtk::Orientation::Vertical,
 
-						connect_clicked => Input::ShowOpenFileDialog,
+					adw::HeaderBar {
+						pack_start = &gtk::Button {
+							set_label: "Open",
+							set_tooltip_text: Some("Open File"),
+
+							connect_clicked => Input::ShowOpenFileDialog,
+						},
+
+						pack_end = &gtk::MenuButton {
+							set_icon_name: "open-menu-symbolic",
+							set_menu_model: Some(&primary_menu),
+							set_tooltip: "Main Menu",
+						},
 					},
 
-					pack_end = &gtk::MenuButton {
-						set_icon_name: "open-menu-symbolic",
-						set_menu_model: Some(&primary_menu),
-						set_tooltip: "Main Menu",
+					adw::TabBar {
+						set_view: Some(tab_view),
 					},
 				},
 
-				model.editor.widget(),
+				#[local_ref]
+				tab_view -> adw::TabView,
 			},
 		}
 	}
@@ -74,9 +83,11 @@ impl SimpleComponent for Model {
 		window: Self::Root,
 		sender: ComponentSender<Self>,
 	) -> ComponentParts<Self> {
-		let editor = editor::Editor::builder().launch(()).detach();
-		let model = Model { editor };
+		let model = Model {
+			editors: FactoryVecDeque::builder().launch_default().detach(),
+		};
 
+		let tab_view = model.editors.widget();
 		let widgets = view_output!();
 
 		Self::load_window_state(&widgets);
@@ -112,7 +123,7 @@ impl SimpleComponent for Model {
 				)
 			}
 			Input::ShowFileContents(file) => {
-				let _ = self.editor.sender().send(editor::Input::OpenFile(file));
+				self.editors.guard().push_back(file);
 			}
 		}
 	}
