@@ -1,8 +1,7 @@
 use std::fs;
 
-use gtk::gio;
 use relm4::prelude::*;
-use source::prelude::*;
+use source::{gio, prelude::*};
 
 pub(crate) struct Editor {
 	text_buffer: source::Buffer,
