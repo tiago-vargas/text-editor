@@ -5,6 +5,7 @@ use source::{gio, prelude::*};
 
 pub(crate) struct Editor {
 	file: Option<gio::File>,
+	title: std::path::PathBuf,
 	text_buffer: source::Buffer,
 }
 
@@ -15,7 +16,7 @@ pub(crate) enum Input {
 	OpenFile(gio::File),
 }
 
-#[relm4::factory(pub)]
+#[relm4::factory(pub(crate))]
 impl FactoryComponent for Editor {
 	type ParentWidget = adw::TabView;
 	type Input = Input;
@@ -24,6 +25,7 @@ impl FactoryComponent for Editor {
 	type CommandOutput = ();
 
 	view! {
+		#[root]
 		gtk::ScrolledWindow {
 			source::View {
 				add_css_class: "monospace",
@@ -34,12 +36,18 @@ impl FactoryComponent for Editor {
 				set_highlight_current_line: true,
 				set_smart_home_end: source::SmartHomeEndType::Before,
 			},
-		}
+		},
+
+		#[local_ref]
+		returned_widget -> adw::TabPage {
+			#[watch] set_title: self.title.to_str().unwrap(),
+		},
 	}
 
 	fn init_model(file: Self::Init, _index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
 		let model = Self {
 			file: None,
+			title: Default::default(),
 			text_buffer: Default::default(),
 		};
 
@@ -52,7 +60,7 @@ impl FactoryComponent for Editor {
 		&mut self,
 		_index: &DynamicIndex,
 		root: Self::Root,
-		_returned_widget: &<Self::ParentWidget as FactoryView>::ReturnedWidget,
+		returned_widget: &<Self::ParentWidget as FactoryView>::ReturnedWidget,
 		_sender: FactorySender<Self>,
 	) -> Self::Widgets {
 		let widgets = view_output!();
@@ -76,6 +84,8 @@ impl FactoryComponent for Editor {
 						.guess_language(Some(uri), None)
 						.as_ref(),
 				);
+
+				self.title = self.file.as_ref().unwrap().basename().unwrap();
 			}
 		}
 	}
