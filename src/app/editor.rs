@@ -1,11 +1,11 @@
 use std::fs;
 
-use adw::prelude::*;
-use gtk::{gio, prelude::FileExt};
+use gtk::gio;
 use relm4::prelude::*;
+use source::prelude::*;
 
 pub(crate) struct Editor {
-	text_buffer: gtk::TextBuffer,
+	text_buffer: source::Buffer,
 }
 
 #[derive(Debug)]
@@ -21,9 +21,13 @@ impl SimpleComponent for Editor {
 
 	view! {
 		gtk::ScrolledWindow {
-			gtk::TextView {
+			source::View {
 				add_css_class: "monospace",
 				set_buffer: Some(&model.text_buffer),
+				set_show_line_marks: true,
+				set_show_line_numbers: true,
+				set_show_right_margin: true,
+				set_highlight_current_line: true,
 			},
 		}
 	}
@@ -34,7 +38,7 @@ impl SimpleComponent for Editor {
 		_sender: ComponentSender<Self>,
 	) -> ComponentParts<Self> {
 		let model = Self {
-			text_buffer: gtk::TextBuffer::new(None),
+			text_buffer: Default::default(),
 		};
 
 		let widgets = view_output!();
