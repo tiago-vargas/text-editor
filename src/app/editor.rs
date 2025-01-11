@@ -38,7 +38,9 @@ impl SimpleComponent for Editor {
 		_sender: ComponentSender<Self>,
 	) -> ComponentParts<Self> {
 		let model = Self {
-			text_buffer: Default::default(),
+			text_buffer: source::Buffer::builder()
+				.style_scheme(&source::StyleScheme::builder().build())
+				.build(),
 		};
 
 		let widgets = view_output!();
