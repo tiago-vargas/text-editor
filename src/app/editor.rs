@@ -28,6 +28,7 @@ impl SimpleComponent for Editor {
 				set_show_line_numbers: true,
 				set_show_right_margin: true,
 				set_highlight_current_line: true,
+				set_smart_home_end: source::SmartHomeEndType::Before,
 			},
 		}
 	}
