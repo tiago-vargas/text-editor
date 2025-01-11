@@ -5,7 +5,7 @@ use source::{gio, prelude::*};
 
 pub(crate) struct Editor {
 	file: Option<gio::File>,
-	title: std::path::PathBuf,
+	pub(crate) title: std::path::PathBuf,
 	text_buffer: source::Buffer,
 }
 

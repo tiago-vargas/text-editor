@@ -11,12 +11,14 @@ mod settings;
 
 pub(crate) struct Model {
 	editors: FactoryVecDeque<editor::Editor>,
+	active_tab: Option<usize>,
 }
 
 #[derive(Debug)]
 pub(crate) enum Input {
 	ShowOpenFileDialog,
 	ShowFileContents(gio::File),
+	TabChanged(usize),
 }
 
 #[relm4::component(pub(crate))]
@@ -36,7 +38,11 @@ impl SimpleComponent for Model {
 
 	view! {
 		main_window = adw::ApplicationWindow {
-			set_title: Some("Text Editor"),
+			#[watch] set_title: model.active_tab.map_or(
+				Some("Text Editor"),
+				// |i| model.editors.get(i).unwrap().title.to_str(),
+				|i| {println!("AAAAAAAA {:?}", model.editors.get(i)); model.editors.get(i).unwrap().title.to_str()},
+			),
 
 			add_css_class?: if BUILD_TYPE == "debug" { Some("devel") } else { None },
 
@@ -73,7 +79,14 @@ impl SimpleComponent for Model {
 				},
 
 				#[local_ref]
-				tab_view -> adw::TabView,
+				tab_view -> adw::TabView {
+					connect_selected_page_notify[sender] => move |this| {
+						if let Some(page) = this.selected_page() {
+							let index = this.page_position(&page);
+							sender.input(Input::TabChanged(index as usize));
+						}
+					},
+				},
 			},
 		}
 	}
@@ -85,6 +98,7 @@ impl SimpleComponent for Model {
 	) -> ComponentParts<Self> {
 		let model = Model {
 			editors: FactoryVecDeque::builder().launch_default().detach(),
+			active_tab: None,
 		};
 
 		let tab_view = model.editors.widget();
@@ -124,6 +138,9 @@ impl SimpleComponent for Model {
 			}
 			Input::ShowFileContents(file) => {
 				self.editors.guard().push_back(file);
+			}
+			Input::TabChanged(index) => {
+				self.active_tab = Some(index);
 			}
 		}
 	}
