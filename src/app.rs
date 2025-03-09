@@ -9,19 +9,19 @@ mod editor;
 mod modals;
 mod settings;
 
-pub(crate) struct Model {
+pub struct Model {
 	editors: FactoryVecDeque<editor::Editor>,
 	active_tab: Option<usize>,
 }
 
 #[derive(Debug)]
-pub(crate) enum Input {
+pub enum Input {
 	ShowOpenFileDialog,
 	ShowFileContents(gio::File),
 	TabChanged(usize),
 }
 
-#[relm4::component(pub(crate))]
+#[relm4::component(pub)]
 impl SimpleComponent for Model {
 	type Init = ();
 	type Input = Input;
@@ -89,7 +89,8 @@ impl SimpleComponent for Model {
 					connect_selected_page_notify[sender] => move |this| {
 						if let Some(page) = this.selected_page() {
 							let index = this.page_position(&page);
-							sender.input(Input::TabChanged(index as usize));
+							let index: usize = index.try_into().unwrap();
+							sender.input(Input::TabChanged(index));
 						}
 					},
 				},
@@ -102,7 +103,7 @@ impl SimpleComponent for Model {
 		window: Self::Root,
 		sender: ComponentSender<Self>,
 	) -> ComponentParts<Self> {
-		let model = Model {
+		let model = Self {
 			editors: FactoryVecDeque::builder().launch_default().detach(),
 			active_tab: None,
 		};
@@ -140,7 +141,7 @@ impl SimpleComponent for Model {
 							sender.input(Input::ShowFileContents(selected_file));
 						}
 					},
-				)
+				);
 			}
 			Input::ShowFileContents(file) => {
 				self.editors.guard().push_back(file);

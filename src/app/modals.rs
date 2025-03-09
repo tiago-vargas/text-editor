@@ -1,14 +1,14 @@
 use adw::prelude::*;
 use relm4::prelude::*;
 
-pub(crate) mod about;
+mod about;
 
 #[derive(Debug)]
-pub(crate) enum Modal {
+pub enum Modal {
 	About,
 }
 
-pub(crate) fn show_window(modal: Modal) {
+pub fn show_window(modal: &Modal) {
 	match modal {
 		Modal::About => {
 			let app = relm4::main_application();

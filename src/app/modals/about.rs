@@ -2,11 +2,11 @@ use relm4::prelude::*;
 
 use crate::config;
 
-pub(crate) struct Model;
+pub struct Model;
 
-pub(crate) struct Init;
+pub struct Init;
 
-#[relm4::component(pub(crate))]
+#[relm4::component(pub)]
 impl SimpleComponent for Model {
 	type Init = Init;
 	type Input = ();

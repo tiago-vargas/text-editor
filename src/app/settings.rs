@@ -3,14 +3,14 @@ use relm4::prelude::*;
 
 use crate::{app, config};
 
-pub(crate) enum WindowSettings {
+pub enum WindowSettings {
 	Width,
 	Height,
 	Maximized,
 }
 
 impl WindowSettings {
-	pub(crate) fn as_str(&self) -> &str {
+	pub const fn as_str(&self) -> &str {
 		match self {
 			Self::Width => "window-width",
 			Self::Height => "window-height",

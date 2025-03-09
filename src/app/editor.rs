@@ -1,23 +1,23 @@
-use std::fs;
+use std::{fs, path};
 
 use relm4::{factory::FactoryView, prelude::*};
 use source::{gio, prelude::*};
 
-pub(crate) struct Editor {
-	pub(crate) file: Option<gio::File>,
-	pub(crate) title: std::path::PathBuf,
-	pub(crate) path: std::path::PathBuf,
+pub struct Editor {
+	pub file: Option<gio::File>,
+	pub title: std::path::PathBuf,
+	pub path: std::path::PathBuf,
 	text_buffer: source::Buffer,
 }
 
 type Init = gio::File;
 
 #[derive(Debug)]
-pub(crate) enum Input {
+pub enum Input {
 	OpenFile(gio::File),
 }
 
-#[relm4::factory(pub(crate))]
+#[relm4::factory(pub)]
 impl FactoryComponent for Editor {
 	type ParentWidget = adw::TabView;
 	type Input = Input;
@@ -48,9 +48,9 @@ impl FactoryComponent for Editor {
 	fn init_model(file: Self::Init, _index: &DynamicIndex, sender: FactorySender<Self>) -> Self {
 		let model = Self {
 			file: None,
-			title: Default::default(),
-			path: Default::default(),
-			text_buffer: Default::default(),
+			title: path::PathBuf::default(),
+			path: path::PathBuf::default(),
+			text_buffer: source::Buffer::default(),
 		};
 
 		sender.input(Input::OpenFile(file));
